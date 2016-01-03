@@ -1,0 +1,96 @@
+﻿@model boardreview.Models.CreatePollViewModel
+
+@{ 
+
+    var su = ViewData["shorturls"] as List<string>;
+
+}
+
+<div class="wrapper style4">
+    <article id="contact" class="container 75%">
+        <div>
+            <div class="row">
+                <div class="12u">
+                    @using (Html.BeginForm())
+                    {
+                        @Html.AntiForgeryToken()
+                        <div>
+
+                            <div class="row">
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Name:</h2>
+                                    <p style="margin-bottom:0px;text-align:left;color:white">Your poll will be accessed via tallyv2.redx.rocks/{Name}. 
+                                    @if (!User.Identity.IsAuthenticated)
+                                    {
+                                        <p style="margin-bottom:0px;text-align:left;color:white">You're not logged in! This will only create a 1 question poll collection! Login for additional features.</p> 
+                                    }
+                                    else
+                                    {
+                                        <p style="margin-bottom:0px;text-align:left;color:white">Enter an existing poll collection to add the question to your collection, or create a new one!</p>
+                                    }
+                                    </p>
+                                    @if (su !=null)
+                                    {
+                                        foreach (var x in su)
+                                        {
+                                            <div width="100%">
+                                                <label width="100%"><input type="radio" name="ShortUrl" id="ShortURL" value="@x" onblur="@Html.Raw("$(&quot;input:text[name='ShortUrl']&quot;).val(&quot;&quot;)")"/>@x</label>
+                                            </div>
+                                        }
+                                        @*<div width="100%">
+                                            <label width="100%"><input type="radio" name="ShortUrl" id="ShortURL" placeholder="New collection.."/></label>
+                                        </div>*@
+                                    }
+                                    @*else
+                                    {
+                                        @Html.TextBoxFor(model => model.ShortURL, new { @autocomplete = "off" })
+                                    }*@
+                                    <input type="text" name="ShortUrl" id="ShortURL" placeholder="New collection.." onblur="@Html.Raw("$(&quot;input:radio[name='ShortUrl']:checked&quot;).prop(&quot;checked&quot;, false)")"/>
+                                    @Html.ValidationMessageFor(model => model.ShortURL, "", new { @class = "text-danger", @style= "color: orangered;"})
+                                </div>
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Question:</h2>
+                                    @*<p style="margin-bottom:0px;text-align:left;color:white">Skip to submit if answers are at the end of the question.</p>*@
+                                    @*<textarea name="question" id="question" placeholder="Question goes here.."></textarea>*@
+                                    @Html.TextAreaFor(model => model.Question, new { @placeholder = "Question goes here..", @autocomplete = "off", required = string.Empty })
+                                    @Html.ValidationMessageFor(model => model.Question, "", new { @class = "text-danger", @style = "color: orangered;" })
+                                </div>
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Answers:</h2>
+                                    <p style="margin-bottom:0px;text-align:left;color:white">At least 2 answers required. Clear answers not needed.</p>
+                                    @Html.TextBoxFor(model => model.Answers[0].Value, new { @Value = "a. ", required = string.Empty, @autocomplete = "off" })
+                                    @Html.TextBoxFor(model => model.Answers[1].Value, new { @Value = "b. ", required = string.Empty, @autocomplete = "off" })
+                                    @Html.TextBoxFor(model => model.Answers[2].Value, new { @Value = "c. ", @type = "search", @autocomplete = "off" })
+                                    @Html.TextBoxFor(model => model.Answers[3].Value, new { @Value = "d. ", @type = "search", @autocomplete = "off" })
+                                    @Html.TextBoxFor(model => model.Answers[4].Value, new { @Value = "e. ", @type = "search", @autocomplete = "off" })
+                                </div>
+                            </div>
+                            <div class="row 200%">
+                                <div class="12u">
+                                    <ul class="actions">
+                                        <li><input type="submit" value="Create Poll" class="once-only"/></li>
+                                        <li><input type="reset" value="Clear Form" class="alt" /></li>
+
+                                        
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <script>
+                        $(document).ready(function () {
+                            $(".once-only").click(function () {
+                                this.submit();
+                                this.disabled = true;
+                                return true;
+                            });
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </article>
+    <script>
+
+    </script>
+</div>

@@ -1,0 +1,92 @@
+﻿@model boardreview.Models.PollViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+    string[] AnswerTextArr = Model.Answers.Select(x => x.AnswerText).ToArray();
+    int[] AnswerCountArr = Model.Answers.Select(x => x.Count).ToArray();
+
+    string serializedAnswerText = (new System.Web.Script.Serialization.JavaScriptSerializer()).Serialize(AnswerTextArr);
+    
+
+
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+
+<div class="wrapper style4">
+    <article id="contact" class="container 75%">
+        <div>
+            <div class="row">
+                <div class="12u">
+                    @using (Html.BeginForm())
+                    {
+                        @Html.AntiForgeryToken()
+                        <div>
+                            <div class="row">
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Link to poll:</h2>
+                                    <p style="margin-bottom:0px;text-align:left;color:white">Your poll will be accessed via <a href="http://tallyv2.redx.rocks/@Model.Question.ShortURL">tallyv2.redx.rocks/@Model.Question.ShortURL</a></p>
+                                    <span>Bookmark this link. This is your admin link. <a href="#">Click here Login!</a> Logging in adds this poll to your collection and lets you add more questions!</span>
+                                    <input type="text" value="http://tallyv2.redx.rocks/@Model.Question.ShortURL" readonly />
+                                </div>
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Question:</h2>
+                                    <p style="margin-bottom:0px;text-align:left;color:white">There are currently @Model.Answers.Select(x => x.Count).Sum() responses this this question.</p>
+                                    <label width="100%">@Html.Raw(Model.Question.QuestionText) </label >
+                                    @*@Html.TextAreaFor(model => model.Question.QuestionText, new { @placeholder = Model.Question.QuestionText, @autocomplete = "off", @readonly = string.Empty })*@                                    
+                                </div>
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Answer totals:</h2>
+                                    @*@Html.TextBoxFor(model => model.Answers[0].AnswerID, new { @Value = Model.Answers[0].AnswerText, @readonly = string.Empty })
+                                    @Html.TextBoxFor(model => model.Answers[1].AnswerID, new { @Value = Model.Answers[1].AnswerText, @readonly = string.Empty })
+                                    @Html.TextBoxFor(model => model.Answers[2].AnswerID, new { @Value = Model.Answers[2].AnswerText, @readonly = string.Empty })
+                                    @Html.TextBoxFor(model => model.Answers[3].AnswerID, new { @Value = Model.Answers[3].AnswerText, @readonly = string.Empty })
+                                    @Html.TextBoxFor(model => model.Answers[4].AnswerID, new { @Value = Model.Answers[4].AnswerText, @readonly = string.Empty })*@
+                                    <div style="width: 100%">
+                                        <canvas id="canvas" height="200" width="600"></canvas>
+                                    </div>
+
+
+                                    <script>
+                                        
+                                        var barChartData = {
+
+                                            labels: @Html.Raw(serializedAnswerText),
+                                            datasets : [
+
+                                                {
+                                                    fillColor : "rgba(220,220,220,0.5)",
+                                                    strokeColor : "rgba(220,220,220,0.8)",
+                                                    highlightFill: "rgba(220,220,220,0.75)",
+                                                    highlightStroke: "rgba(220,220,220,1)",
+                                                    data : @serializer.Serialize(AnswerCountArr)
+
+                                                    },
+                                            ]
+                                        }
+                                        window.onload = function(){
+                                            var ctx = document.getElementById("canvas").getContext("2d");
+                                            window.myBar = new Chart(ctx).Bar(barChartData, {
+                                                responsive : true
+                                            });
+                                        }
+                                    </script>
+                                </div>
+                            </div>
+                            @*<div class="row 200%">
+                                <div class="12u">
+                                    <ul class="actions">
+                                        <li><input type="submit" value="Create Poll" /></li>
+                                        <li><input type="reset" value="Clear Form" class="alt" /></li>
+                                    </ul>
+                                </div>
+                            </div>*@
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </article>
+</div>

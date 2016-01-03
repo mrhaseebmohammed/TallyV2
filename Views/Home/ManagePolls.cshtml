@@ -1,0 +1,137 @@
+﻿@model boardreview.Models.AllPollsViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    //var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+
+    //int[] AnswerCountArr = Model.Answers.Select(x => x.Count).ToArray();
+    //string serializedAnswerText = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Model.Answers.Select(x => x.AnswerText).ToArray());
+
+    var categories = Model.Questions.GroupBy(x => x.ShortURL).Select(y => y.First()).Distinct();
+
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+
+<div class="wrapper style4">
+    <article id="contact" class="container 75%">
+        <div>
+            <div class="row">
+                <div class="12u">
+                    @if (Request.QueryString["shortUrl"] != null)
+                    {
+                        <div class="12u">
+                            @*<h2 style="margin-bottom:0px;text-align:left;color:white">Link to poll:</h2>*@
+                            <p style="text-align:left;color:white;font-size:2em;">This collection can be accessed at <a href="http://tallyv2.redx.rocks/@Request.QueryString["shortUrl"]">tallyv2.redx.rocks/@Request.QueryString["shortUrl"]</a></p>
+                            @*<input type="text" value="http://tallyv2.redx.rocks/@Request.QueryString["shortUrl"]" readonly />*@
+                        </div>
+
+                            foreach (var q in Model.Questions.Where(x => x.ShortURL == Request.QueryString["shortUrl"]).OrderByDescending(x=>x.ModifiedDateTime).OrderByDescending(x=>x.CreatedByUserID).OrderByDescending(x => x.Active))
+                            {
+                            <div>
+                                <div class="row">
+                                    <div class="12u">
+                                        <div style="width=100%;">
+                                            @*<h2 style="margin-bottom:0px;text-align:left;color:white">Question:</h2>*@
+                                            <p style="margin-bottom:0px;text-align:left;color:white">There are currently @Model.Answers.Where(x => x.QuestionID == q.QuestionID).Select(x => x.Count).Sum() responses this this question.</p>
+                                            @if (q.Active)
+                                            {
+                                                <p style="margin-bottom:0px;text-align:left;color:white">This poll is <font id="status" color="green">Active!</font> <a href="#" onclick="$.post(&quot;/Home/ToggleActive&quot;, {QuestionID: @q.QuestionID });location.reload()">Click to deactivate</a></p>
+                                            }
+                                            else
+                                            {
+                                                <p style="margin-bottom:0px;text-align:left;color:white">This poll is <font id="status" color="red">Inactive!</font> <a href="#" onclick="$.post(&quot;/Home/ToggleActive&quot;, {QuestionID: @q.QuestionID });location.reload()">Click to activate</a></p> 
+                                            }
+
+                                            <p style="margin-bottom:0px;text-align:left;color:white">Created on @q.CreatedDateTime</p>
+
+                                            @if (q.ModifiedDateTime != null)
+                                            {
+                                                <p style="margin-bottom:0px;text-align:left;color:white">Last modified on @q.ModifiedDateTime</p>
+                                            }
+                                            
+                                        </div>
+                                        <div>
+                                            <label width="100%" style="margin-left:1px;margin-right:1px">@Html.Raw(q.QuestionText)</label>
+                                        </div>
+                                        @*@Html.TextAreaFor(model => model.Question.QuestionText, new { @placeholder = Model.Question.QuestionText, @autocomplete = "off", @readonly = string.Empty })*@
+                                    </div>
+                                    <div class="12u">
+                                        @*<h2 style="margin-bottom:0px;text-align:left;color:white">Answer totals:</h2>*@
+                                        @*@Html.TextBoxFor(model => model.Answers[0].AnswerID, new { @Value = Model.Answers[0].AnswerText, @readonly = string.Empty })
+                                            @Html.TextBoxFor(model => model.Answers[1].AnswerID, new { @Value = Model.Answers[1].AnswerText, @readonly = string.Empty })
+                                            @Html.TextBoxFor(model => model.Answers[2].AnswerID, new { @Value = Model.Answers[2].AnswerText, @readonly = string.Empty })
+                                            @Html.TextBoxFor(model => model.Answers[3].AnswerID, new { @Value = Model.Answers[3].AnswerText, @readonly = string.Empty })
+                                            @Html.TextBoxFor(model => model.Answers[4].AnswerID, new { @Value = Model.Answers[4].AnswerText, @readonly = string.Empty })*@
+                                        <div style="width: 100%">
+                                            <canvas id="canvas_@q.QuestionID" height="200" width="600"></canvas>
+                                        </div>
+
+
+                                        <script>
+
+                                            var barChartData_@q.QuestionID = {
+
+                                            labels: @Html.Raw(new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Model.Answers.Where(x=>x.QuestionID == q.QuestionID).Select(x => x.AnswerText).ToArray())),
+                                            datasets : [
+
+                                                {
+                                                    fillColor : "rgba(220,220,220,0.5)",
+                                                    strokeColor : "rgba(220,220,220,0.8)",
+                                                    highlightFill: "rgba(220,220,220,0.75)",
+                                                    highlightStroke: "rgba(220,220,220,1)",
+                                                    data : @Html.Raw(new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Model.Answers.Where(x => x.QuestionID == q.QuestionID).Select(x => x.Count).ToArray()))
+
+                                                    },
+                                            ]
+                                        }
+                                            function load_@q.QuestionID ()
+                                            {
+                                            var ctx_@q.QuestionID = document.getElementById("canvas_@q.QuestionID").getContext("2d");
+                                            window.myBar = new Chart(ctx_@q.QuestionID).Bar(barChartData_@q.QuestionID, {
+                                                responsive : true
+                                            });
+                                            }   
+                                        </script>
+                                    </div>
+                                </div>
+                                @*<div class="row 200%">
+                                        <div class="12u">
+                                            <ul class="actions">
+                                                <li><input type="submit" value="Create Poll" /></li>
+                                                <li><input type="reset" value="Clear Form" class="alt" /></li>
+                                            </ul>
+                                        </div>
+                                    </div>*@
+                            </div>
+                            <hr />
+                        }
+
+                    }
+                    else
+                    {
+                        @("Select a collection to manage:")
+                        <hr style="margin-top:0;margin-bottom:0;">
+                        foreach (var x in categories)
+                        {
+                            <a href="\Home\ManagePolls?shortUrl=@x.ShortURL">@x.ShortURL</a>
+                            <br />
+                        }
+                    }
+
+                    <script>
+                        window.onload = function()
+                        {
+                            @foreach(var q in Model.Questions.Where(x=>x.ShortURL == Request.QueryString["shortUrl"]))
+                            {
+                                var func = "load_" + q.QuestionID + "()";
+                                @(func);@(";")
+                            }
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>

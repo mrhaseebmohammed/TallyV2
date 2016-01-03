@@ -1,0 +1,170 @@
+﻿@using DevOne.Security.Cryptography.BCrypt;
+@model boardreview.Models.AllPollsViewModel
+
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var uniqueid = BCryptHelper.HashPassword("amazinglyunique", BCryptHelper.GenerateSalt());
+
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+
+<div class="wrapper style4">
+    <article id="contact" class="container 75%">
+        <div>
+            <div class="row">
+                <div class="12u">
+                    @*<span id="uniqueid"></span>*@
+                    @*@using (Html.BeginForm())
+                    {*@
+                    @if(Model.Questions.Length == 0)
+                    {
+                        <span>No active questions.</span>
+                    }
+                        @foreach (var q in Model.Questions)
+                        {
+                        @*@Html.AntiForgeryToken()*@
+                            <div class="12u">
+                                <h2 style="margin-bottom:10px;text-align:left;color:white">Question:</h2>
+                                @*<textarea name="question" id="question" placeholder="Question goes here.."></textarea>*@
+                                @*@Html.TextAreaFor(model => model.Question.QuestionText, new { @placeholder = Model.Question.QuestionText, @autocomplete = "off", @readonly = string.Empty })*@
+                                <label width="100%">@Html.Raw(q.QuestionText)</label>
+                            </div>
+                        <div id="question_@q.QuestionID" style="display:none">
+                            <div class="row">
+                                <div class="12u">
+                                    <h2 style="margin-bottom:0px;text-align:left;color:white">Answers:</h2>
+                                    @foreach (var x in Model.Answers.Where(x => x.QuestionID == q.QuestionID))
+                                    {
+                                        <div width="100%">                                            
+                                            <label width="100%"><input type="radio" name="Answer_@q.QuestionID" id="Answer_@q.QuestionID" value="@x.AnswerID" />@x.AnswerText</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="row 200%">
+                                <div class="12u" style="padding-top: 0px;">
+                                    <ul class="actions">
+                                        <li><input type="button" value="Submit Answer" onclick="answerQuestion('@q.QuestionID','Answer_@q.QuestionID', localStorage.uniqueID)" /></li>
+                                        @*<li><input type="reset" value="Clear Form" class="alt" /></li>*@
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="result_@q.QuestionID" class="hidden">
+                            <div class="row 200%" style="width: 100%;">
+                                <canvas id="canvas_@q.QuestionID" style="width: 100%;"></canvas>
+                            </div>
+
+
+                            <script>
+
+                                            var barChartData_@q.QuestionID = {
+
+                                            labels: @Html.Raw(new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Model.Answers.Where(x=>x.QuestionID == q.QuestionID).Select(x => x.AnswerText).ToArray())),
+                                            datasets : [
+
+                                                {
+                                                    fillColor : "rgba(220,220,220,0.5)",
+                                                    strokeColor : "rgba(220,220,220,0.8)",
+                                                    highlightFill: "rgba(220,220,220,0.75)",
+                                                    highlightStroke: "rgba(220,220,220,1)",
+                                                    data : @Html.Raw(new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Model.Answers.Where(x => x.QuestionID == q.QuestionID).Select(x => x.Count).ToArray()))
+
+                                                    },
+                                            ]
+                                        }
+                                            @*function load@q.QuestionID ()
+                                            {
+                                                var ctx_@q.QuestionID = document.getElementById("canvas_@q.QuestionID").getContext("2d");
+                                            window.myBar = new Chart(ctx_@q.QuestionID).Bar(barChartData_@q.QuestionID, {
+                                                maintainAspectRatio: true,
+                                                responsive: false
+                                            });
+                                            }*@
+                            </script>
+                        </div>
+                        <hr />
+                        <hr />
+                        }
+
+                    <script>
+                        function uniqueID() {
+                            if(typeof(Storage) !== "undefined") {
+                                if (localStorage.uniqueID) {
+                                    
+                                } else {
+                                    localStorage.uniqueID = @Html.Raw("\""+uniqueid.ToString()+"\"");
+                                }
+
+                            }
+                        }
+
+                        function answerQuestion(question, answerradio, uniqueid)
+                        {
+                            console.log(question);
+                            console.log($("input:radio[name=" + answerradio + "]:checked").val());
+                            console.log(uniqueid);
+                            $.post( "/Home/AnswerQuestion", {QuestionID: question, AnswerID: $("input:radio[name=" + answerradio + "]:checked").val(), uniqueID: uniqueid }, function(){removeAnsweredQuestions(question,uniqueid);} );
+
+                            var bar = "barChartData_" + question;
+                            var ans = $("input:radio[name=" + answerradio + "]:checked").parent().text();
+                            eval(bar).datasets[0].data[eval(bar).labels.indexOf(ans)]++;
+                            load(eval(bar), question);
+                            
+                        }
+                        function removeAnsweredQuestions(question, uniqueid)
+                        {
+                            $.post( "/Home/IsQuestionAnswered", {QuestionID: question, uniqueID: localStorage.uniqueID }, function(data) 
+                            {
+                                if(data == "True")
+                                {
+                                    $("#question_" + question).hide();
+                                    $("#result_" + question).removeClass("hidden");
+                                    var bar = "barChartData_" + question;
+                                    load(eval(bar), question);
+                                    
+                                }
+                                if(data == "False")
+                                {
+                                    $("#question_" + question).show();
+                                }
+                            
+                            } );
+                        }
+                        function load(bar, question)
+                        {
+                            var ctx = document.getElementById("canvas_" + question).getContext("2d");
+                            window.myBar = new Chart(ctx).Bar(bar, {
+                            responsive: true
+                        });
+                        }
+                    </script>
+                    <script>
+                        window.onload = function()
+                        {
+                            uniqueID();
+
+
+                            @foreach(var q in Model.Questions)
+                            {
+                                var func = "removeAnsweredQuestions(" + q.QuestionID + ", localStorage.uniqueID);\n";
+                                @(func)
+                                //func = "load_" + q.QuestionID + "();";
+                                func = "load(" + "barChartData_" + q.QuestionID + "," + q.QuestionID + ");\n";
+                                @(func)
+                                
+
+                            }
+
+                            //$("#uniqueid").html(localStorage.uniqueID);
+                        }
+                    </script>
+                    @*}*@
+                </div>
+            </div>
+        </div>
+    </article>
+</div>
